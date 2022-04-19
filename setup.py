@@ -129,12 +129,24 @@ def setup_roi(vid):
 
 
 def setup_area(img, spacing=5):
-    (corners, ids, rejected) = detect_aruco(img)
+    """Function to setup the measure area
+
+    Args:
+        img (cv2.Mat): image of the setup
+        spacing (int, optional): The measured distance between the two points in feet. Defaults to 5.
+
+    Returns:
+        (float, (point, point)): The inches per pixel ratio, and the 2 center points of hte aruco tags
+    """
+    corners, ids, rejected = detect_aruco(img)
+    img = draw_aruco(img, corners)
+    img = draw_line_between_arucos(img, corners)
 
     if ids is None:
-        raise ArucoSetupError(f"No aruco tags found, expect to find 2")
+        img = cv2.putText(img, "No Aruco's found", (5, int(img.shape[0]*.95)), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255),1)
+        return None, None
     if len(ids) != 2:
-        raise ArucoSetupError(f"Found {len(ids)} aruco tags, expect to find 2")
+        img = cv2.putText(img, "(2) Aruco's not found", (5, int(img.shape[0]*.95)), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255),1)
 
     p1 = get_center(corners[0][0])
     p2 = get_center(corners[1][0])
@@ -147,13 +159,9 @@ def setup_area(img, spacing=5):
 
     return spacing * 12 / abs(p2.x-p1.x), (p1, p2)
 
-
 if __name__ == '__main__':
     img = cv2.imread('./test/diff2_marked.png')
     ratio, points = setup_area(img)
-    corners, ids, rejected = detect_aruco(img)
-    img = draw_aruco(img, corners)
-    img = draw_line_between_arucos(img, corners)
     cv2.imshow("Aruco Detection", img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()

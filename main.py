@@ -1,5 +1,6 @@
 import cv2
-from setup import ArucoSetupError, detect_aruco, draw_aruco, draw_line_between_arucos, find_camera, setup_area, setup_roi
+import sys
+from setup import find_camera, setup_area, setup_roi
 
 def main(cam_id = None):
 
@@ -13,22 +14,18 @@ def main(cam_id = None):
     while(True):
         ret, frame = vid.read()
 
-        corners, _, _ = detect_aruco(frame)
-        img = draw_aruco(frame, corners)
-        img = draw_line_between_arucos(frame, corners)
+        spacing, points = setup_area(frame)
 
-        try:
-            setup_area(img)
-        except ArucoSetupError:
-            img = cv2.putText(img, "(2) Aruco's not found", (5, int(img.shape[0]*.95)), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255),1)
-
-        cv2.imshow("Setup", img)
-        if cv2.waitKey(33) & 0xFF == ord('c'):
+        cv2.imshow("Setup", frame)
+        if cv2.waitKey(10) & 0xFF == ord('c') and spacing is not None:
             cv2.destroyAllWindows()
             break
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            sys.exit()
 
-
+    # Select Region of Interest
     roi = setup_roi(vid)
+
 
 
 if __name__ == "__main__":
