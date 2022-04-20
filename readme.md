@@ -6,6 +6,10 @@ The program uses a diff between two frames to find the location of the disc and 
 ![Example Diff](docs/example_diff.png)
 
 ## Setup
+### Camera
+The setup uses opencv VideoCapture and can be provided a webcam id, video file, or use a tool like DroidCam.
+
+DroidCam String `'http://[[Your Phone IP]]:4747/mjpegfeed?640x480'`
 ### Setting up the tape measure (Aruco Tags)
 The program expects two aruco tags (seen below). By default the distance between the tags is expected to be 5 feet (center to center). For best results, the tags should be at throwing height and be horizontally even.
 
@@ -18,7 +22,8 @@ It's important that the background is static, so that the diffing algorithm does
 
 from pytablewriter import MarkdownTableWriter
 # Disc Gap (inches) Per Frame (FPS vs Speed)
-|Speed (MPH)|15 |30 |60 |120|240|
+
+|Speed (MPH)|15 FPS |30 FPS |60 FPS |120 FPS|240 FPS|
 |----------:|--:|--:|--:|--:|--:|
 |          5| -3| -5| -7| -8| -8|
 |         10|  3| -3| -5| -7| -8|

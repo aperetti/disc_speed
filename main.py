@@ -1,8 +1,13 @@
 import cv2
 import sys
-from setup import find_camera, setup_area, setup_roi
 
-def main(cam_id = None):
+from get_diff import get_diff, process_imgs
+from setup import find_camera, setup_area, setup_roi
+from sql import connect_db, save_throw
+from tools import CircularTimeBuffer, crop_roi
+import time
+
+def main(cam_id = None, debug=False):
 
     # Setup Camera
     if cam_id is None:
@@ -13,11 +18,13 @@ def main(cam_id = None):
     # Setup Environment
     while(True):
         ret, frame = vid.read()
+        if frame is None:
+            continue
 
-        spacing, points = setup_area(frame)
+        ppi, points = setup_area(frame)
 
         cv2.imshow("Setup", frame)
-        if cv2.waitKey(10) & 0xFF == ord('c') and spacing is not None:
+        if cv2.waitKey(10) & 0xFF == ord('c') and ppi is not None:
             cv2.destroyAllWindows()
             break
         if cv2.waitKey(10) & 0xFF == ord('q'):
@@ -25,8 +32,46 @@ def main(cam_id = None):
 
     # Select Region of Interest
     roi = setup_roi(vid)
+    conn = connect_db()
+    frames =  CircularTimeBuffer(3)
+    while(True):
+        ret, frame = vid.read()
+        frame = crop_roi(frame, roi)
+        frames.add(frame.copy())
+
+
+        # Populate the history
+        if not frames.is_full():
+            continue
+
+        frame1, frame2, tm = frames.get_two(1,2)
+        pixels, found_disc = get_diff(frame1, frame2)
+
+        if not found_disc:
+            continue
+
+        if pixels is None and found_disc:
+            frame1, frame2, tm = frames.get_two(1,3)
+            pixels, found_disc = get_diff(frame1, frame2)
+
+        if pixels is not None and found_disc:
+            mph = pixels / ppi * 12 / tm * .681818
+            save_throw(conn, mph)
+            if debug:
+                img = process_imgs(frame1, frame2)
+                cv2.imwrite(f"./debug/compare_{int(time.time())}.png", img)
+
+        else:
+            continue
 
 
 
 if __name__ == "__main__":
-    main(0)
+    # Webcam
+    # main(0, debug=True)
+
+    # Video Test
+    # main("./test/test_throw.mp4", debug=True)
+
+    # Droid Test
+    main()

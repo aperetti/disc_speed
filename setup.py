@@ -2,7 +2,7 @@ from dataclasses import dataclass
 import cv2
 import numpy as np
 
-from tools import length, tuple_int
+from tools import distance, tuple_int
 
 
 class NoVideoFrame(Exception):
@@ -89,11 +89,11 @@ def draw_line_between_arucos(img, corners, aruco_size_mm=100):
         for i, c in enumerate(corners):
             c = [tuple_int(x) for x in c[0]]
             for j in range(4):
-                aruco_dists.append(length(c[j], c[(j+1) % 4]))
+                aruco_dists.append(distance(c[j], c[(j+1) % 4]))
             centers[i] = get_center(c).tuple()
 
         aruco_dist = np.mean(aruco_dists)
-        dist_between = length(centers[0], centers[1])
+        dist_between = distance(centers[0], centers[1])
         img = cv2.circle(img, centers[0], 3, grn)
         img = cv2.circle(img, centers[1], 3, grn)
         img = cv2.line(img, centers[0], centers[1], color=grn)
@@ -125,6 +125,7 @@ def setup_roi(vid):
     roi = cv2.selectROI(frame)
     if roi == (0, 0, 0, 0):
         raise NoRegionOfInterest
+    cv2.destroyAllWindows()
     return roi
 
 
@@ -136,7 +137,7 @@ def setup_area(img, spacing=5):
         spacing (int, optional): The measured distance between the two points in feet. Defaults to 5.
 
     Returns:
-        (float, (point, point)): The inches per pixel ratio, and the 2 center points of hte aruco tags
+        (float, (point, point)): The pixels per inch, and the 2 center points of hte aruco tags
     """
     corners, ids, rejected = detect_aruco(img)
     img = draw_aruco(img, corners)
@@ -147,6 +148,7 @@ def setup_area(img, spacing=5):
         return None, None
     if len(ids) != 2:
         img = cv2.putText(img, "(2) Aruco's not found", (5, int(img.shape[0]*.95)), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255),1)
+        return None, None
 
     p1 = get_center(corners[0][0])
     p2 = get_center(corners[1][0])
@@ -157,7 +159,7 @@ def setup_area(img, spacing=5):
         p2 = p1
         p1 = p_temp
 
-    return spacing * 12 / abs(p2.x-p1.x), (p1, p2)
+    return  abs(p2.x-p1.x) * 1. / (spacing * 12) , (p1, p2)
 
 if __name__ == '__main__':
     img = cv2.imread('./test/diff2_marked.png')

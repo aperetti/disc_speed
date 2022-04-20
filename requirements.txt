@@ -2,3 +2,5 @@ imutils
 opencv-contrib-python
 colour
 numpy
+hvplot
+streamz

@@ -1,15 +1,27 @@
 import cv2
 from cv2 import blur
-from tools import crop_roi
+from tools import crop_roi, distance
 import imutils
 import heapq
 
-def get_diff(img1, img2):
+def process_imgs(img1, img2):
     img_diff = cv2.absdiff(img1, img2)
     gray_diff = cv2.cvtColor(img_diff, cv2.COLOR_BGR2GRAY)
     dilated = cv2.dilate(gray_diff, None, iterations=1)
     blurred = cv2.GaussianBlur(dilated, (9, 9), 0)
+    return blurred
 
+def get_diff(img1, img2):
+    """Takes two images finds the difference and returns the distance in pixels between two discs
+
+    img2
+       (cv2.Mat): Second Image to compar
+       e
+
+    Returns:
+        (float, bool): The distance between discs and if at least one disc found.
+    """
+    blurred = process_imgs(img1, img2)
     (T, thresh) = cv2.threshold(blurred, 30, 255, cv2.THRESH_BINARY)
 
     contours = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -32,11 +44,12 @@ def get_diff(img1, img2):
     if len(heap) >= 2:
         center1 = heapq.heappop(heap)[1]
         center2 = heapq.heappop(heap)[1]
-        discs = (center1, center2)
+        return distance(center1, center2), True
+    if len(heap) == 1:
+        return None, True
     else:
-        discs = None
+        return None, False
 
-    return discs, thresh
 
 
 if __name__ == '__main__':
