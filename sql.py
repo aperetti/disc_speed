@@ -1,14 +1,15 @@
 import sqlite3
 from time import time
+from datetime import datetime
 
-LATEST_VERSION = 2
+LATEST_VERSION = 2.1
 
 def init_db(con: sqlite3.Connection):
     con.execute("DROP TABLE IF EXISTS throws")
     con.execute("""
         CREATE TABLE IF NOT EXISTS throws (
             id integer primary key autoincrement
-            , dt numeric
+            , dt text
             , speed numeric)
         """)
     con.execute("INSERT INTO version VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET version = ?", (LATEST_VERSION, LATEST_VERSION))
@@ -23,7 +24,7 @@ def connect_db():
     return con
 
 def save_throw(con, speed):
-    con.execute("INSERT INTO throws(dt, speed) VALUES (?,?)", (time(), speed))
+    con.execute("INSERT INTO throws(dt, speed) VALUES (datetime('now'),?)", (speed,))
     con.commit()
 
 if __name__ == "__main__":

@@ -4,16 +4,21 @@ import sys
 from get_diff import get_diff, process_imgs
 from setup import find_camera, setup_area, setup_roi
 from sql import connect_db, save_throw
-from tools import CircularTimeBuffer, crop_roi
+from tools import CaptureWrapper, CircularTimeBuffer, crop_roi
 import time
 
-def main(cam_id = None, debug=False):
+def main(cam_id = None, debug=False, loop=False):
 
     # Setup Camera
     if cam_id is None:
         vid = find_camera()
     else:
         vid = cv2.VideoCapture(cam_id)
+
+    fps = vid.get(cv2.CAP_PROP_FPS)
+
+    if loop:
+        vid = CaptureWrapper(vid)
 
     # Setup Environment
     while(True):
@@ -33,7 +38,7 @@ def main(cam_id = None, debug=False):
     # Select Region of Interest
     roi = setup_roi(vid)
     conn = connect_db()
-    frames =  CircularTimeBuffer(3)
+    frames =  CircularTimeBuffer(3, fps)
     while(True):
         ret, frame = vid.read()
         frame = crop_roi(frame, roi)
@@ -45,20 +50,22 @@ def main(cam_id = None, debug=False):
             continue
 
         frame1, frame2, tm = frames.get_two(1,2)
-        pixels, found_disc = get_diff(frame1, frame2)
+        pixels, found_disc, centers = get_diff(frame1, frame2)
 
         if not found_disc:
             continue
 
         if pixels is None and found_disc:
             frame1, frame2, tm = frames.get_two(1,3)
-            pixels, found_disc = get_diff(frame1, frame2)
+            pixels, found_disc, centers = get_diff(frame1, frame2)
 
         if pixels is not None and found_disc:
-            mph = pixels / ppi * 12 / tm * .681818
+            mph = pixels / ppi / 12 / tm * .681818
             save_throw(conn, mph)
             if debug:
                 img = process_imgs(frame1, frame2)
+                cv2.circle(img, centers[0], 5, (0,255,0))
+                cv2.circle(img, centers[1], 5, (0,255,0))
                 cv2.imwrite(f"./debug/compare_{int(time.time())}.png", img)
 
         else:
@@ -71,7 +78,7 @@ if __name__ == "__main__":
     # main(0, debug=True)
 
     # Video Test
-    # main("./test/test_throw.mp4", debug=True)
+    main("./test/test_throw.mp4", debug=True, loop=True)
 
     # Droid Test
-    main()
+    # main()
