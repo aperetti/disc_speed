@@ -1,3 +1,4 @@
+from collections import namedtuple
 import math
 import time
 import numpy as np
@@ -62,3 +63,7 @@ class CaptureWrapper:
 
 
 
+def angle(p1, p2):
+    return math.tan(-1 * (p2.y-p1.y)/(p2.x-p1.x))
+
+Point = namedtuple("Point", ["x", "y"])

@@ -4,3 +4,4 @@ colour
 numpy
 hvplot
 streamz
+mediapipe

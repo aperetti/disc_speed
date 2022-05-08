@@ -1,10 +1,11 @@
+from cmath import pi
 import cv2
 import sys
 
 from get_diff import get_diff, process_imgs
 from setup import find_camera, setup_area, setup_roi
 from sql import connect_db, save_throw
-from tools import CaptureWrapper, CircularTimeBuffer, crop_roi
+from tools import CaptureWrapper, CircularTimeBuffer, angle, crop_roi
 import time
 
 def main(cam_id = None, debug=False, loop=False):
@@ -35,6 +36,7 @@ def main(cam_id = None, debug=False, loop=False):
         if cv2.waitKey(10) & 0xFF == ord('q'):
             sys.exit()
 
+    aruco_angle = angle(*points)
     # Select Region of Interest
     roi = setup_roi(vid)
     conn = connect_db()
@@ -61,7 +63,8 @@ def main(cam_id = None, debug=False, loop=False):
 
         if pixels is not None and found_disc:
             mph = pixels / ppi / 12 / tm * .681818
-            save_throw(conn, mph)
+            throw_angle = aruco_angle - angle(*centers) * 180 / pi
+            save_throw(conn, mph, throw_angle)
             if debug:
                 img = process_imgs(frame1, frame2)
                 cv2.circle(img, centers[0], 5, (0,255,0))

@@ -1,5 +1,5 @@
 import cv2
-from tools import crop_roi, distance
+from tools import crop_roi, distance, Point
 import imutils
 import heapq
 
@@ -38,7 +38,7 @@ def get_diff(img1, img2):
 
         cX = int(m["m10"] / m["m00"])
         cY = int(m["m01"] / m["m00"])
-        heapq.heappush(heap, (area, (cX, cY)))
+        heapq.heappush(heap, (area, Point(cX, cY)))
 
     if len(heap) >= 2:
         center1 = heapq.heappop(heap)[1]
@@ -55,9 +55,10 @@ if __name__ == '__main__':
     img1 = cv2.imread('./test/diff1.png')
     img2 = cv2.imread('./test/diff2.png')
     # roi = cv2.selectROI(img1)
-    roi = (471, 393, 897, 225)
-    centers, img = get_diff(crop_roi(img1, roi), crop_roi(img2, roi))
+    roi = (110, 103, 813, 371)
+    dist, found_disc, centers  = get_diff(crop_roi(img1, roi), crop_roi(img2, roi))
 
+    img = crop_roi(process_imgs(img1, img2), roi)
     for c in centers:
         img = cv2.circle(img, c, 5, (0,255,0))
 

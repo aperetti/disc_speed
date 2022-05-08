@@ -10,6 +10,7 @@ The program uses a diff between two frames to find the location of the disc and 
 The setup uses opencv VideoCapture and can be provided a webcam id, video file, or use a tool like DroidCam.
 
 DroidCam String `'http://[[Your Phone IP]]:4747/mjpegfeed?640x480'`
+
 ### Setting up the tape measure (Aruco Tags)
 The program expects two aruco tags (seen below). By default the distance between the tags is expected to be 5 feet (center to center). For best results, the tags should be at throwing height and be horizontally even.
 

@@ -1,15 +1,20 @@
+from collections import namedtuple
 from dataclasses import dataclass
+import math
 import cv2
 import numpy as np
 
-from tools import distance, tuple_int
+from tools import distance, tuple_int, Point
 
 
 class NoVideoFrame(Exception):
     pass
 
+
 class NoCameraFound(Exception):
     pass
+
+
 class ArucoSetupError(Exception):
     pass
 
@@ -17,14 +22,6 @@ class ArucoSetupError(Exception):
 class NoRegionOfInterest(Exception):
     pass
 
-
-@dataclass
-class Point:
-    x: int
-    y: int
-
-    def tuple(self):
-        return (self.x, self.y)
 
 
 @dataclass
@@ -90,7 +87,7 @@ def draw_line_between_arucos(img, corners, aruco_size_mm=100):
             c = [tuple_int(x) for x in c[0]]
             for j in range(4):
                 aruco_dists.append(distance(c[j], c[(j+1) % 4]))
-            centers[i] = get_center(c).tuple()
+            centers[i] = get_center(c)
 
         aruco_dist = np.mean(aruco_dists)
         dist_between = distance(centers[0], centers[1])
@@ -144,10 +141,12 @@ def setup_area(img, spacing=5):
     img = draw_line_between_arucos(img, corners)
 
     if ids is None:
-        img = cv2.putText(img, "No Aruco's found", (5, int(img.shape[0]*.95)), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255),1)
+        img = cv2.putText(img, "No Aruco's found", (5, int(
+            img.shape[0]*.95)), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255), 1)
         return None, None
     if len(ids) != 2:
-        img = cv2.putText(img, "(2) Aruco's not found", (5, int(img.shape[0]*.95)), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255),1)
+        img = cv2.putText(img, "(2) Aruco's not found", (5, int(
+            img.shape[0]*.95)), cv2.FONT_HERSHEY_SIMPLEX, .6, (255, 255, 255), 1)
         return None, None
 
     p1 = get_center(corners[0][0])
@@ -159,7 +158,8 @@ def setup_area(img, spacing=5):
         p2 = p1
         p1 = p_temp
 
-    return  abs(p2.x-p1.x) * 1. / (spacing * 12) , (p1, p2)
+    return abs(p2.x-p1.x) * 1. / (spacing * 12), (p1, p2)
+
 
 if __name__ == '__main__':
     img = cv2.imread('./test/diff2_marked.png')
